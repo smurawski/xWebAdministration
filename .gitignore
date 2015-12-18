@@ -1,1 +1,3 @@
 DSCResource.Tests
+.kitchen/
+.kitchen.local.yml

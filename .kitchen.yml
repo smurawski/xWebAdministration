@@ -1,6 +1,12 @@
 ---
 driver:
   name: vagrant
+  linked_clones: true
+  gui: false
+  communicator: winrm
+  customize:
+    cpus: 2
+    memory: 4096
 
 provisioner:
   name: dsc
@@ -12,16 +18,19 @@ verifier:
   name: pester
 
 platforms:
+  - name: windows-2008r2-wmf4
+    driver:
+      box: smurawski/2012R2-wmf4
   - name: windows-2012r2-wmf4
     driver:
-      box: mwrock/Windows2012R2
+      box: smurawski/2012R2-wmf4
       network: 
         - ["forwarded_port", {guest: 80, host: 8080}]
     provisioner:
       dsc_local_configuration_manager_version: wmf4_with_update
   - name: windows-2012r2-wmf5
     driver:
-      box: windows2012_wmf5
+      box: smurawski/2012R2-wmf5
       network:
         - ["forwarded_port", {guest: 80, host: 8081}]
     provisioner:

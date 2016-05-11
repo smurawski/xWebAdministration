@@ -1,67 +1,89 @@
-$Global:DSCModuleName   = 'xWebAdministration'
-$Global:DSCResourceName = 'MSFT_xWebsite'
+describe 'Server is a Webserver' {
+  context 'Features' {
+    $Installed =  'Web-Server',
+                  'Web-WebServer',
+                  'Web-Common-Http',
+                  'Web-Default-Doc',
+                  'Web-Dir-Browsing',
+                  'Web-Http-Errors',
+                  'Web-Static-Content',
+                  'Web-Health',
+                  'Web-Http-Logging',
+                  'Web-Performance',
+                  'Web-Stat-Compression',
+                  'Web-Dyn-Compression',
+                  'Web-Security',
+                  'Web-Filtering',
+                  'Web-App-Dev',
+                  'Web-Net-Ext45',
+                  'Web-Asp-Net45',
+                  'Web-ISAPI-Ext',
+                  'Web-ISAPI-Filter',
+                  'Web-Mgmt-Tools',
+                  'Web-Mgmt-Service'
 
-#region HEADER
-[String] $moduleRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $Script:MyInvocation.MyCommand.Path))
-if ( (-not (Test-Path -Path (Join-Path -Path $moduleRoot -ChildPath 'DSCResource.Tests'))) -or `
-     (-not (Test-Path -Path (Join-Path -Path $moduleRoot -ChildPath 'DSCResource.Tests\TestHelper.psm1'))) )
-{
-    & git @('clone','https://github.com/PowerShell/DscResource.Tests.git',(Join-Path -Path $moduleRoot -ChildPath '\DSCResource.Tests\'))
+    $NotInstalled = 'Web-Application-Proxy',
+                    'Web-Http-Redirect',
+                    'Web-DAV-Publishing',
+                    'Web-Custom-Logging',
+                    'Web-Log-Libraries',
+                    'Web-ODBC-Logging',
+                    'Web-Request-Monitor',
+                    'Web-Http-Tracing',
+                    'Web-Basic-Auth',
+                    'Web-CertProvider',
+                    'Web-Client-Auth',
+                    'Web-Digest-Auth',
+                    'Web-Cert-Auth',
+                    'Web-IP-Security',
+                    'Web-Url-Auth',
+                    'Web-Windows-Auth',
+                    'Web-Net-Ext',
+                    'Web-AppInit',
+                    'Web-ASP',
+                    'Web-Asp-Net',
+                    'Web-CGI',
+                    'Web-Includes',
+                    'Web-WebSockets',
+                    'Web-Ftp-Server',
+                    'Web-Ftp-Service',
+                    'Web-Ftp-Ext',
+                    'Web-Mgmt-Console',
+                    'Web-Mgmt-Compat',
+                    'Web-Metabase',
+                    'Web-Lgcy-Mgmt-Console',
+                    'Web-Lgcy-Scripting',
+                    'Web-WMI',
+                    'Web-Scripting-Tools',
+                    'Web-WHC'
+     
+    $CurrentWebFeatures = get-windowsfeature web* | 
+      where Installed | 
+      select -expand Name
+      
+    foreach ($feature in $CurrentWebFeatures)  {              
+      it "has $feature installed" {
+        $installed -contains $feature | should be $true
+      }
+    }
+    foreach ($feature in $NotInstalled)  {              
+      it "does not have $feature installed" {
+        $CurrentWebFeatures -notcontains $feature | should be $true
+      }
+    }
+  }
 }
 
-Import-Module (Join-Path -Path $moduleRoot -ChildPath 'DSCResource.Tests\TestHelper.psm1') -Force
-$TestEnvironment = Initialize-TestEnvironment `
-    -DSCModuleName $Global:DSCModuleName `
-    -DSCResourceName $Global:DSCResourceName `
-    -TestType Integration
-#endregion
-
-[string] $tempName = "$($Global:DSCResourceName)_" + (Get-Date).ToString("yyyyMMdd_HHmmss")
-
-try
-{
-    # Now that xWebAdministration should be discoverable load the configuration data
-    $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath "$($Global:DSCResourceName).config.ps1"
-    . $ConfigFile
-
-    $null = Backup-WebConfiguration -Name $tempName
-
-    Describe "$($Global:DSCResourceName)_Integration" {
-        #region DEFAULT TESTS
-        It 'Should compile without throwing' {
-            {
-                Invoke-Expression -Command "$($Global:DSCResourceName)_Config -OutputPath `$TestEnvironment.WorkingFolder"
-                Start-DscConfiguration -Path $TestEnvironment.WorkingFolder -ComputerName localhost -Wait -Verbose -Force
-            } | Should not throw
-        }
-
-        It 'should be able to call Get-DscConfiguration without throwing' {
-            { Get-DscConfiguration -Verbose -ErrorAction Stop } | Should Not throw
-        }
-        #endregion
+describe 'Behavior' {
+    it 'has a website listening on port 80' {
+      get-website | where {
+          $_.state -like 'Started' -and 
+          $_.bindings.collection.bindinginformation -like '*:80:'
+        } | 
+        should not benullorempty
     }
-
-    Describe 'MSFT_xWebBindingInformation' {
-        # Directly interacting with Cim classes is not supported by PowerShell DSC
-        # it is being done here explicitly for the purpose of testing. Please do not
-        # do this in actual resource code
-        $xWebBindingInforationClass = (Get-CimClass -Namespace 'root/microsoft/Windows/DesiredStateConfiguration' -ClassName 'MSFT_xWebBindingInformation')
-        $storeNames = (Get-CimClass -Namespace 'root/microsoft/Windows/DesiredStateConfiguration' -ClassName 'MSFT_xWebBindingInformation').CimClassProperties['CertificateStoreName'].Qualifiers['Values'].Value
-
-        foreach ($storeName in $storeNames)
-        {
-            It "Uses valid credential store: $storeName" {
-                (Join-Path -Path Cert:\LocalMachine -ChildPath $storeName) | Should Exist
-            }
-        }
+    
+    it 'Returns "Hey!" on port 80' {
+        irm 'http://localhost' | should match 'Hey!'
     }
-}
-finally
-{
-    #region FOOTER
-    Restore-WebConfiguration -Name $tempName
-    Remove-WebConfigurationBackup -Name $tempName
-
-    Restore-TestEnvironment -TestEnvironment $TestEnvironment
-    #endregion
 }

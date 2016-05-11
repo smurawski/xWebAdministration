@@ -3,6 +3,7 @@ configuration MSFT_xWebsite_Config
     Import-DscResource -ModuleName xWebAdministration
 
     $WebsiteDirectory = "c:\Website"
+    
     WindowsFeature 'WebServer'
     {
         Name = 'web-server'

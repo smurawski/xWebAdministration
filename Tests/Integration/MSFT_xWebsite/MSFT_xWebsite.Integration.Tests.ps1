@@ -56,17 +56,17 @@ describe 'Server is a Webserver' {
                     'Web-WMI',
                     'Web-Scripting-Tools',
                     'Web-WHC'
-     
-    $CurrentWebFeatures = get-windowsfeature web* | 
-      where Installed | 
+
+    $CurrentWebFeatures = get-windowsfeature web* |
+      where Installed |
       select -expand Name
-      
-    foreach ($feature in $CurrentWebFeatures)  {              
+
+    foreach ($feature in $CurrentWebFeatures)  {
       it "has $feature installed" {
         $installed -contains $feature | should be $true
       }
     }
-    foreach ($feature in $NotInstalled)  {              
+    foreach ($feature in $NotInstalled)  {
       it "does not have $feature installed" {
         $CurrentWebFeatures -notcontains $feature | should be $true
       }
@@ -77,13 +77,24 @@ describe 'Server is a Webserver' {
 describe 'Behavior' {
     it 'has a website listening on port 80' {
       get-website | where {
-          $_.state -like 'Started' -and 
+          $_.state -like 'Started' -and
           $_.bindings.collection.bindinginformation -like '*:80:'
-        } | 
+        } |
         should not benullorempty
     }
-    
+
     it 'Returns "Hey!" on port 80' {
         irm 'http://localhost' | should match 'Hey!'
+    }
+
+    context 'WebRequest' {
+        $webresponse = Invoke-WebRequest http://localhost -UseBasicParsing
+        it 'returns 200' {
+            $webresponse.statuscode | should be 200
+        }
+        
+        it 'has a content length of 7' {
+            $webresponse.rawcontentlength | should be 7
+        }
     }
 }

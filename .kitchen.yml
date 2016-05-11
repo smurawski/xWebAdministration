@@ -29,17 +29,15 @@ platforms:
   - name: windows-2012r2-wmf5
     driver:
       box: smurawski/2012R2-wmf5
-      network:
+      network: 
         - ["forwarded_port", {guest: 80, host: 8081}]
     provisioner:
       dsc_local_configuration_manager_version: wmf5
-
-
+  
 suites:
   - name: MSFT_xWebsite
     provisioner: 
       configuration_script_folder: Tests/Integration/MSFT_xWebsite
       configuration_script: MSFT_xWebsite.config.ps1
       configuration_name: MSFT_xWebsite_Config
-
 

@@ -40,4 +40,12 @@ suites:
       configuration_script_folder: Tests/Integration/MSFT_xWebsite
       configuration_script: MSFT_xWebsite.config.ps1
       configuration_name: MSFT_xWebsite_Config
-
+  - name: MSFT_xWebsite_NewWebsite
+    provisioner:
+      configuration_script: Sample_xWebsite_NewWebsite.ps1
+      configuration_data:
+        AllNodes:
+          - nodename: localhost
+            websitename: test
+            destinationpath: c:/sites/BakeryWebsite
+            sourceurl: 'http://blogs.msdn.com/cfs-file.ashx/__key/communityserver-blogs-components-weblogfiles/00-00-00-63-74-metablogapi/3124.Demo_5F00_WindowServer2012R2_2D00_Preview_5F00_4677B514.zip'

@@ -30,7 +30,7 @@ platforms:
     driver:
       box: smurawski/2012R2-wmf5
       network: 
-        - ["forwarded_port", {guest: 80, host: 8081}]
+        - ["forwarded_port", {guest: 80, host: 8180}]
     provisioner:
       dsc_local_configuration_manager_version: wmf5
   
